@@ -149,7 +149,9 @@ def generate_poster():
 def show_poster(poster_filename):
     return render_template('poster.html', poster_url=url_for('static', filename=f'posters/{poster_filename}'))
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
+
     # Ensure the posters directory exists
     if not os.path.exists('static/posters'):
         os.makedirs('static/posters')

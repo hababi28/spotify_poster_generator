@@ -7,6 +7,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from colorthief import ColorThief
 import textwrap
+import re
 
 app = Flask(__name__)
 
@@ -43,6 +44,13 @@ def wrap_text(text, font, max_width):
             line += (words.pop(0) + ' ')
         lines.append(line.strip())
     return lines
+
+def extract_album_id(url_or_id):
+    pattern = r'(album/|si=)([a-zA-Z0-9]+)'
+    match = re.search(pattern, url_or_id)
+    if match:
+        return match.group(2)
+    return url_or_id
 
 def create_album_poster(album_name, artist_name, release_date, cover_url, tracklist, album_length, output_path):
     # A4 dimensions in pixels at 300 DPI
@@ -138,7 +146,8 @@ def index():
 
 @app.route('/generate_poster', methods=['POST'])
 def generate_poster():
-    album_id = request.form['album_id']
+    album_input = request.form['album_id']
+    album_id = extract_album_id(album_input)
     album_name, artist_name, release_date, cover_url, tracklist, album_length = get_album_info(album_id)
     output_path = f'static/posters/{album_id}.png'
     create_album_poster(album_name, artist_name, release_date, cover_url, tracklist, album_length, output_path)
@@ -162,4 +171,7 @@ Blonde: 3mH6qwIy9crq0I9YQbOuDf
 Faces: 5SKnXCvB4fcGSZu32o3LRY
 We Go Again: 4vdQXcHcAGcVSBA7956EMq
 Enter The Wu-Tang: 3tQd5mwBtVyxCoEo4htGAV
+
+https://open.spotify.com/album/5GuWww4OaildzkmTTlfMN3?si=1UGTSlb_TwuLVhOSwUS6Tg
+https://open.spotify.com/album/5GuWww4OaildzkmTTlfMN3
 """

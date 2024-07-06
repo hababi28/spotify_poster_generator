@@ -2,6 +2,8 @@
 
 Code for a static website that produces automatically generated album posters using a python script and spotify API.
 
+Web version available at: http://spotifyposter.com/
+
 ### Examples
 <ul>
 

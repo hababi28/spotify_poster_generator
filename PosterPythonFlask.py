@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template, redirect, url_for
+from flask import Flask, request, send_file, render_template, redirect, url_for, flash
 import os
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -20,14 +20,18 @@ client_credentials_manager = SpotifyClientCredentials(client_id=CLIENT_ID, clien
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 def get_album_info(album_id):
-    album = sp.album(album_id)
-    album_name = album['name']
-    artist_name = album['artists'][0]['name']
-    release_date = album['release_date']
-    cover_url = album['images'][0]['url']
-    tracklist = [track['name'] for track in album['tracks']['items']]
-    album_length = sum(track['duration_ms'] for track in album['tracks']['items']) // 1000  # in seconds
-    return album_name, artist_name, release_date, cover_url, tracklist, album_length
+    try:
+        album = sp.album(album_id)
+        album_name = album['name']
+        artist_name = album['artists'][0]['name']
+        release_date = album['release_date']
+        cover_url = album['images'][0]['url']
+        tracklist = [track['name'] for track in album['tracks']['items']]
+        album_length = sum(track['duration_ms'] for track in album['tracks']['items']) // 1000  # in seconds
+        return album_name, artist_name, release_date, cover_url, tracklist, album_length
+    except spotipy.exceptions.SpotifyException as e:
+        app.logger.error(f"Spotify API error: {e}")
+        return None
 
 def format_duration(seconds):
     minutes = seconds // 60
@@ -148,6 +152,12 @@ def index():
 def generate_poster():
     album_input = request.form['album_id']
     album_id = extract_album_id(album_input)
+
+    album_info = get_album_info(album_id)
+    if album_info is None:
+        flash("Invalid album ID or URL. Please try again.")
+        return redirect(url_for('home'))
+    
     album_name, artist_name, release_date, cover_url, tracklist, album_length = get_album_info(album_id)
     output_path = f'static/posters/{album_id}.png'
     create_album_poster(album_name, artist_name, release_date, cover_url, tracklist, album_length, output_path)
@@ -162,7 +172,7 @@ if __name__ == '__main__':
     # Ensure the posters directory exists
     if not os.path.exists('static/posters'):
         os.makedirs('static/posters')
-    app.run(debug=False)
+    app.run(debug=True)
 
 
 """

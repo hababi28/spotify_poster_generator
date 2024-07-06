@@ -15,7 +15,7 @@
         h1 {
             color: #333;
         }
-        .download-button, .generate-another {
+        .generate-button {
             display: inline-block;
             margin-top: 20px;
             padding: 10px 20px;
@@ -23,9 +23,10 @@
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            border: none;
             transition: background-color 0.3s;
         }
-        .download-button:hover, .generate-another:hover {
+        .generate-button:hover {
             background-color: #0056b3;
         }
     </style>
@@ -34,9 +35,9 @@
     <h1>Generate Spotify Album Poster</h1>
     <div class="form-container">
         <form action="/generate_poster" method="post">
-            <input type="text" name="album_id" placeholder="Enter Spotify Album ID" required>
+            <input type="text" name="album_id" placeholder="Enter Spotify Album Link" required>
             <br>
-            <button type="submit" class="download-button">Generate Poster</button>
+            <button type="submit" class="generate-button">Generate Poster</button>
         </form>
     </div>
 </body>

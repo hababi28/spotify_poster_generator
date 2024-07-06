@@ -29,6 +29,15 @@
         .generate-button:hover {
             background-color: #0056b3;
         }
+        .footer{ 
+            position: fixed;     
+            text-align: center;    
+            bottom: 5px; 
+            width: 100%;
+        }
+        .form-container{ 
+            text-align: center;
+        } 
     </style>
 </head>
 <body>
@@ -40,6 +49,17 @@
             <button type="submit" class="generate-button">Generate Poster</button>
         </form>
     </div>
+
+    <br>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="footer">Made by Hababi Tafesse.</div>
 </body>
 </html>
 

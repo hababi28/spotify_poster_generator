@@ -11,6 +11,8 @@ import re
 
 app = Flask(__name__)
 
+app.secret_key = os.urandom(24)
+
 # Spotify API credentials
 CLIENT_ID = '9541df5016954307900d70df168a2d0a'
 CLIENT_SECRET = '8e30826cf40d4c4cb769fe9195e12db9'
@@ -155,8 +157,8 @@ def generate_poster():
 
     album_info = get_album_info(album_id)
     if album_info is None:
-        flash("Invalid album ID or URL. Please try again.")
-        return redirect(url_for('home'))
+        flash("Invalid album ID or link. Please try again.")
+        return redirect(url_for('index'))
     
     album_name, artist_name, release_date, cover_url, tracklist, album_length = get_album_info(album_id)
     output_path = f'static/posters/{album_id}.png'
@@ -172,7 +174,7 @@ if __name__ == '__main__':
     # Ensure the posters directory exists
     if not os.path.exists('static/posters'):
         os.makedirs('static/posters')
-    app.run(debug=True)
+    app.run(debug=False)
 
 
 """

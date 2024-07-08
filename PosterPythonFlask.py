@@ -104,8 +104,23 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     
     # Calculate text positions
     text_start_y = cover_image_height + 20
-    draw.text((50, text_start_y), f"{album_name}", fill="black", font=font_title)
-    draw.text((50, text_start_y + 120), f"{artist_name}", fill="black", font=font_subtitle)
+    
+    # Resize album title font if necessary and wrap text if it's too long
+    max_title_width = poster_width - 100
+    album_name_lines = wrap_text(album_name, font_title, max_title_width)
+    
+    if len(album_name_lines) > 2:
+        # If more than 2 lines, reduce font size
+        font_title = ImageFont.truetype(font_path, 100)
+        album_name_lines = wrap_text(album_name, font_title, max_title_width)
+    
+    # Draw the album title
+    current_y = text_start_y
+    for line in album_name_lines[:2]:  # Limit to 2 lines
+        draw.text((50, current_y), line, fill="black", font=font_title)
+        current_y += font_title.getbbox(line)[3] + 10  # Line height with some padding
+        
+    draw.text((50, current_y), f"{artist_name}", fill="black", font=font_subtitle)
     
     # Right-aligned release date and album length
     release_date_text = f"Release Date: {release_date}"
@@ -115,19 +130,25 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     poster_right_margin = 50
 
     draw.text((poster_width - release_date_width - poster_right_margin, text_start_y + 140), release_date_text, fill="black", font=font_text)
-    draw.text((poster_width - album_length_width - poster_right_margin, text_start_y + 220), album_length_text, fill="black", font=font_text)
+    draw.text((poster_width - album_length_width - poster_right_margin, text_start_y + 210), album_length_text, fill="black", font=font_text)
     
     # Draw the tracklist
-    tracklist_start_y = text_start_y + 250
+    tracklist_start_y = current_y + 120
     draw.text((50, tracklist_start_y), "Tracklist:", fill="black", font=font_text)
     
     # Calculate max tracks per column
-    tracklist_column_height = text_area_height - 450
-    line_height = font_text.getbbox("A")[3] + 15  # Height of each line with some padding
-    max_tracks_per_column = tracklist_column_height // line_height  # Assuming each track takes one line
+    if len(album_name_lines) > 1:
+        tracklist_column_height = text_area_height - 500
 
+    if len(album_name_lines) == 1:
+        tracklist_column_height = text_area_height - 400
+        
+    line_height = font_text.getbbox("A")[3] + 15  # Height of each line with some padding
+    ##max_tracks_per_column = tracklist_column_height // line_height  # Assuming each track takes one line
+    max_tracks_per_column = 9
+    
     num_columns = (len(tracklist) + max_tracks_per_column - 1) // max_tracks_per_column
-    column_width = poster_width // num_columns
+    column_width = (poster_width-50) // num_columns
 
     for col in range(num_columns):
         current_y = tracklist_start_y + line_height
@@ -174,7 +195,7 @@ if __name__ == '__main__':
     # Ensure the posters directory exists
     if not os.path.exists('static/posters'):
         os.makedirs('static/posters')
-    app.run(debug=False)
+    app.run(debug=True)
 
 
 """

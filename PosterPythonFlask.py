@@ -195,7 +195,7 @@ if __name__ == '__main__':
     # Ensure the posters directory exists
     if not os.path.exists('static/posters'):
         os.makedirs('static/posters')
-    app.run(debug=True)
+    app.run(debug=False)
 
 
 """

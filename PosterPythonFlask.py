@@ -159,7 +159,7 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     track_lines = []
     for idx, track in enumerate(tracklist):
         numbered_track = f"{idx + 1}. {track}"
-        wrapped_lines = wrap_text(numbered_track, font_text, poster_width // (((len(tracklist) + max_lines_per_column - 1) // max_lines_per_column) + 1))
+        wrapped_lines = wrap_text(numbered_track, font_text, poster_width // (((len(tracklist) + max_lines_per_column - 1) // (max_lines_per_column - 1)) + 1))
         track_lines.extend(wrapped_lines)
 
     num_columns = (len(track_lines) + max_lines_per_column - 1) // max_lines_per_column

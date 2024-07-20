@@ -3,3 +3,4 @@ requests
 Pillow
 spotipy
 colorthief
+colorgram.py

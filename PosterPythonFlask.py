@@ -8,6 +8,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from colorthief import ColorThief
 import textwrap
 import re
+import colorgram
 
 app = Flask(__name__)
 
@@ -65,12 +66,10 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     # Download album cover
     response = requests.get(cover_url)
     cover_image = Image.open(BytesIO(response.content))
-    
-    """
-    # Extract dominant color from cover image
-    color_thief = ColorThief(BytesIO(response.content))
-    dominant_color = color_thief.get_color(quality=1)
-    """
+
+    # Extract 5 most prominent colors from the cover image
+    colors = colorgram.extract(cover_image, 5)
+    prominent_colors = [color.rgb for color in colors]
     
     # Define border size and color
     border_size = 30
@@ -98,7 +97,7 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     
     # Initialize drawing context
     draw = ImageDraw.Draw(poster)
-    font_title = ImageFont.truetype(font_path, 125)
+    font_title = ImageFont.truetype(font_path, 100)
     font_subtitle = ImageFont.truetype(font_path, 100)
     font_text = ImageFont.truetype("static/fonts/Proxima-Nova.otf", 60)
     
@@ -106,7 +105,7 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     text_start_y = cover_image_height + 20
     
     # Resize album title font if necessary and wrap text if it's too long
-    max_title_width = poster_width - 100
+    max_title_width = poster_width - 650
     album_name_lines = wrap_text(album_name, font_title, max_title_width)
     
     if len(album_name_lines) > 2:
@@ -121,6 +120,17 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
         current_y += font_title.getbbox(line)[3] + 10  # Line height with some padding
         
     draw.text((50, current_y), f"{artist_name}", fill="black", font=font_subtitle)
+
+    # Draw 5 squares with the 5 most prominent colors
+    square_size = 100
+    square_margin = 20
+    start_x = poster_width - 580 - 50
+    start_y = text_start_y
+    for i, color in enumerate(prominent_colors):
+        rgb_color = (color.r, color.g, color.b)
+        draw.rectangle([start_x + i * (square_size + square_margin), start_y, 
+                        start_x + i * (square_size + square_margin) + square_size, 
+                        start_y + square_size], fill=rgb_color)
     
     # Right-aligned release date and album length
     release_date_text = f"Release Date: {release_date}"
@@ -138,31 +148,47 @@ def create_album_poster(album_name, artist_name, release_date, cover_url, trackl
     
     # Calculate max tracks per column
     if len(album_name_lines) > 1:
-        tracklist_column_height = text_area_height - 500
+        tracklist_column_height = text_area_height - 450
 
     if len(album_name_lines) == 1:
         tracklist_column_height = text_area_height - 400
         
     line_height = font_text.getbbox("A")[3] + 15  # Height of each line with some padding
-    ##max_tracks_per_column = tracklist_column_height // line_height  # Assuming each track takes one line
-    max_tracks_per_column = 9
-    
-    num_columns = (len(tracklist) + max_tracks_per_column - 1) // max_tracks_per_column
-    column_width = (poster_width-50) // num_columns
+    max_lines_per_column = 13 - ((len(album_name_lines) - 1)*2)
+    # Dynamic calculation of number of tracks per column considering wrapped lines
+    track_lines = []
+    for idx, track in enumerate(tracklist):
+        numbered_track = f"{idx + 1}. {track}"
+        wrapped_lines = wrap_text(numbered_track, font_text, poster_width // (((len(tracklist) + max_lines_per_column - 1) // max_lines_per_column) + 1))
+        track_lines.extend(wrapped_lines)
 
-    for col in range(num_columns):
-        current_y = tracklist_start_y + line_height
-        for i in range(max_tracks_per_column):
-            track_index = col * max_tracks_per_column + i
-            if track_index >= len(tracklist):
-                break
-            track_name = tracklist[track_index]
-            wrapped_lines = wrap_text(track_name, font_text, column_width - 100)
-            draw.text((50 + col * column_width, current_y), f"{track_index + 1}. {wrapped_lines[0]}", fill="black", font=font_text)
+    num_columns = (len(track_lines) + max_lines_per_column - 1) // max_lines_per_column
+    column_width = poster_width // num_columns
+    
+    """ Testing column construction
+    #max_lines_per_column = tracklist_column_height // line_height
+    #max_lines_per_column = 13 - ((len(album_name_lines) - 1)*2)
+    print("-------")
+    print(num_columns)
+    print(((len(track_lines) + max_lines_per_column - 1) // max_lines_per_column))
+    print(len(track_lines))
+    print("-------")
+    #num_columns = 3
+    """
+    
+    current_column = 0
+    current_y = tracklist_start_y + line_height
+    track_number = 1
+    for track in tracklist:
+        numbered_track = f"{track_number}. {track}"
+        wrapped_lines = wrap_text(numbered_track, font_text, column_width - 100)
+        for line in wrapped_lines:
+            draw.text((50 + current_column * column_width, current_y), line, fill="black", font=font_text)
             current_y += line_height
-            for line in wrapped_lines[1:]:
-                draw.text((70 + col * column_width, current_y), line, fill="black", font=font_text)
-                current_y += line_height
+            if current_y >= (tracklist_start_y + max_lines_per_column * line_height):
+                current_column += 1
+                current_y = tracklist_start_y + line_height
+        track_number += 1
     
     # Save the poster to a file
     poster.save(output_path)
